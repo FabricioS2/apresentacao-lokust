@@ -1,0 +1,41 @@
+services:
+  db:
+    image: postgres:17
+    container_name: am-signature-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: am_signature_db
+      POSTGRES_USER: am_signature_user
+      POSTGRES_PASSWORD: am_signature_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U am_signature_user -d am_signature_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: am-signature-web
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://am_signature_user:am_signature_password@db:5432/am_signature_db
+    command: >
+      sh -c "python manage.py migrate && python manage.py collectstatic --noinput && exec gunicorn am_signature.wsgi:application --bind 0.0.0.0:8000 --workers 2 --threads 4 --worker-class gthread --timeout 120 --graceful-timeout 30 --keep-alive 5 --max-requests 1000 --max-requests-jitter 100"
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
