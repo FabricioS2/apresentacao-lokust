@@ -1,38 +1,39 @@
-# --------------------
 # Python
-# --------------------
 __pycache__/
-*.pyc
+*.py[cod]
 *.pyo
 *.pyd
-env/
+
+# Virtualenv
+.venv/
 venv/
 
-# --------------------
 # Django
-# --------------------
-db.sqlite3
-*.log
-media/
 staticfiles/
+media/
+*.sqlite3
+db.sqlite3
 
-# --------------------
-# Environment variables
-# --------------------
+# Backups gerados por scripts
+*.bak
+*.bak2
+*.backup
+*.backup_before_locust
+
+# Environment
 .env
-*.env
+.env.*
+!.env.example
 
-# --------------------
-# OS files
-# --------------------
+# Docker
+docker-compose.override.yml
+
+# Logs / temporários
+*.log
 .DS_Store
-Thumbs.db
+*.swp
 
-# --------------------
-# IDE / Editor
-# --------------------
-.vscode/
-.idea/
-
-
-.venv
+# Dumps e scripts de setup (já aplicados)
+projeto_completo.txt
+tools/setup_seed.py
+tools/setup_all.py

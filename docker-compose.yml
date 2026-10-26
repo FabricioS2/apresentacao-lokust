@@ -28,7 +28,7 @@ services:
     environment:
       DATABASE_URL: postgresql://am_signature_user:am_signature_password@db:5432/am_signature_db
     command: >
-      sh -c "python manage.py migrate && python manage.py collectstatic --noinput && exec gunicorn am_signature.wsgi:application --bind 0.0.0.0:8000 --workers 2 --threads 4 --worker-class gthread --timeout 120 --graceful-timeout 30 --keep-alive 5 --max-requests 1000 --max-requests-jitter 100"
+      sh -c "python manage.py migrate && python manage.py collectstatic --noinput && python manage.py seed_data && exec gunicorn am_signature.wsgi:application --bind 0.0.0.0:8000 --workers 2 --threads 4 --worker-class gthread --timeout 120 --graceful-timeout 30 --keep-alive 5 --max-requests 1000 --max-requests-jitter 100"
     volumes:
       - .:/app
     ports:

@@ -111,6 +111,10 @@ STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 
+# Media (uploads) — setup_all.py
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
+
 STORAGES = {
     "default": {
         "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
@@ -160,3 +164,32 @@ LOGOUT_REDIRECT_URL = "login"
 # DEFAULT PRIMARY KEY
 # =========================
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+
+# =========================================================
+# Media (uploads) — setup_all.py
+# =========================================================
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
+
+_CLOUDINARY_READY = all([
+    os.environ.get("CLOUDINARY_CLOUD_NAME"),
+    os.environ.get("CLOUDINARY_API_KEY"),
+    os.environ.get("CLOUDINARY_API_SECRET"),
+])
+
+# Se as 3 credenciais Cloudinary estiverem reais → usa Cloudinary.
+# Senão → FileSystemStorage local (grava em ./media, persistido pelo volume).
+STORAGES = {
+    "default": {
+        "BACKEND": (
+            "cloudinary_storage.storage.MediaCloudinaryStorage"
+            if _CLOUDINARY_READY
+            else "django.core.files.storage.FileSystemStorage"
+        ),
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
+# =========================================================

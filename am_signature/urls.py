@@ -33,3 +33,21 @@ urlpatterns = [
 ]
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+
+# =========================================================
+# Servir /media/ — setup_all.py
+# Em DEBUG o Django já serve via static(). Em produção
+# (gunicorn atrás de proxy sem nginx) precisamos desta rota.
+# Para produção séria: use nginx ou Cloudinary.
+# =========================================================
+from django.views.static import serve as _media_serve
+from django.urls import re_path as _media_re_path
+
+urlpatterns += [
+    _media_re_path(
+        r"^media/(?P<path>.*)$",
+        _media_serve,
+        {"document_root": settings.MEDIA_ROOT},
+    ),
+]
