@@ -37,3 +37,12 @@ docker-compose.override.yml
 projeto_completo.txt
 tools/setup_seed.py
 tools/setup_all.py
+
+# Logs e relatórios do Locust
+gunicorn_*.log
+locust_*.log
+report_exceptions.csv
+report_failures.csv
+report.html
+report_stats.csv
+report_stats_history.csv

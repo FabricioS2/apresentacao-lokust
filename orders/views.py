@@ -144,7 +144,7 @@ def remove_from_cart(request, item_id):
 @login_required
 def place_order(request):
     """
-    Handles order placement, stock validation,
+    Handles order placement, stock validation (com lock),
     order creation, cart clearing, and email notifications.
     """
     cart = get_object_or_404(Cart, user=request.user)
@@ -164,10 +164,26 @@ def place_order(request):
 
         with transaction.atomic():
 
-            # Stock validation before creating order
-            for item in cart.items.select_related("product"):
+            cart_items = list(cart.items.select_related("product"))
+            locked_sizes = {}
+
+            # Lock as linhas de ProductSize ANTES de validar o estoque.
+            # Sem isso, dois usuários concorrentes passam pela validação
+            # e um deles acaba vendendo a mesma unidade.
+            for item in cart_items:
                 if item.product.has_sizes:
-                    ps = get_object_or_404(ProductSize, product=item.product, size=item.size)
+                    try:
+                        ps = ProductSize.objects.select_for_update().get(
+                            product=item.product,
+                            size=item.size,
+                        )
+                    except ProductSize.DoesNotExist:
+                        messages.error(
+                            request,
+                            f"Size {item.size} is no longer available for {item.product.name}.",
+                        )
+                        return redirect("orders:cart")
+
                     if ps.stock < item.quantity:
                         messages.error(
                             request,
@@ -175,7 +191,9 @@ def place_order(request):
                         )
                         return redirect("orders:cart")
 
-            # Create order
+                    locked_sizes[(item.product.id, item.size)] = ps
+
+            # Criar pedido com estoque já validado sob lock
             order = Order.objects.create(
                 user=request.user,
                 full_name=full_name,
@@ -183,8 +201,7 @@ def place_order(request):
                 address=address,
             )
 
-            # Create order items and reduce stock
-            for item in cart.items.select_related("product"):
+            for item in cart_items:
                 OrderItem.objects.create(
                     order=order,
                     product=item.product,
@@ -193,14 +210,10 @@ def place_order(request):
                 )
 
                 if item.product.has_sizes:
-                    ps = ProductSize.objects.select_for_update().get(
-                        product=item.product,
-                        size=item.size,
-                    )
+                    ps = locked_sizes[(item.product.id, item.size)]
                     ps.stock -= item.quantity
                     ps.save()
 
-            # Clear cart after successful order
             cart.items.all().delete()
 
         # Email notifications

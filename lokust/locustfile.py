@@ -4,7 +4,7 @@ import random
 from uuid import uuid4
 
 import gevent
-from locust import HttpUser, LoadTestShape, between, task, tag
+from locust import HttpUser, between, task, tag
 
 
 def env_int(name, default):
@@ -549,30 +549,3 @@ class StoreUser(HttpUser):
                 r.failure(f"HTTP {r.status_code}")
 
 
-class StressShape(LoadTestShape):
-    """
-    Perfil opcional:
-    30s -> 10 usuários
-    60s -> 50 usuários
-    120s -> 100 usuários
-    180s -> 200 usuários
-
-    Use:
-      locust -f locustfile.py --headless --shape StressShape
-    """
-
-    stages = [
-        {"duration": 30, "users": 10, "spawn_rate": 2},
-        {"duration": 60, "users": 50, "spawn_rate": 5},
-        {"duration": 120, "users": 100, "spawn_rate": 10},
-        {"duration": 180, "users": 200, "spawn_rate": 20},
-    ]
-
-    def tick(self):
-        run_time = self.get_run_time()
-
-        for stage in self.stages:
-            if run_time < stage["duration"]:
-                return stage["users"], stage["spawn_rate"]
-
-        return None
